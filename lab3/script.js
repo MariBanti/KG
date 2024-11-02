@@ -13,6 +13,7 @@ let startPoint = { x: 0, y: 0 };
 let endPoint = { x: 0, y: 0 };
 let centerPoint = { x: 0, y: 0 };
 let radiusLen = 0;
+let numberOfClicks = 0;
 let isDragging = false;
 let offsetX = 0;
 let offsetY = 0;
@@ -131,39 +132,101 @@ function toOutput(text) {
 
 function stepAlgorithm() {
 	toOutput("Пошаговый алгоритм:");
-	drawLine(startPoint, endPoint);
+
+	let x0 = startPoint.x;
+	let y0 = startPoint.y;
+	let x1 = endPoint.x;
+	let y1 = endPoint.y;
+	toOutput(`Отрезок от (${x0}, ${y0}) до (${x1}, ${y1})`);
+
+	if (x0 > x1) swap(x0, x1);
+	if (y0 > y1) swap(y0, y1);
+
+	let dx = x1 - x0;
+	let dy = y1 - y0;
+
+	toOutput(`dx = ${dx}`);
+	toOutput(`dy = ${dy}`);
+
+	if (dy <= dx) {
+		toOutput(`|dy| <= |dx|, рисуем, просматривая x от ${x0} до ${x1}`);
+		let step = dy / dx;
+		if (dx == 0) step = 0;
+
+		for (let x = x0; x <= x1; x++) {
+			let y = y0 + step * (x - x0);
+			toOutput(
+				`Для x = ${x} найдена точка y = ${y} -> рисуем (${x}, ${Math.floor(y)})`
+			);
+			paintPixel(x, Math.floor(y));
+		}
+	} else {
+		toOutput(`|dx| < |dy|, рисуем, просматривая y от ${y0} до ${y1}`);
+		let step = dx / dy;
+
+		for (let y = y0; y <= y1; y++) {
+			let x = x0 + step * (y - y0);
+			toOutput(
+				`Для y = ${y} найдена точка x = ${x} -> рисуем (${Math.floor(x)}, ${y})`
+			);
+			paintPixel(Math.floor(x), y);
+		}
+	}
 }
 
 function DDA() {
 	toOutput("Алгоритм ЦДА:");
-	drawLine(startPoint, endPoint);
+	let x0 = startPoint.x;
+	let y0 = startPoint.y;
+	let x1 = endPoint.x;
+	let y1 = endPoint.y;
+
+	let dx = x1 - x0;
+	let dy = y1 - y0;
+	let steps = Math.max(Math.abs(dx), Math.abs(dy));
+	toOutput(`Число шагов: ${steps}`);
+
+	let addX = dx / steps;
+	let addY = dy / steps;
+	if (steps == 0) {
+		addX = 0;
+		addY = 0;
+	}
+	toOutput(`dx = ${addX}`);
+	toOutput(`dy = ${addY}`);
+
+	for (let i = 0; i <= steps; i++) {
+		let x = x0 + addX * i;
+		let y = y0 + addY * i;
+		toOutput(`Точка (${x}, ${y}), рисуем (${Math.floor(x)}, ${Math.floor(y)})`);
+		paintPixel(Math.floor(x), Math.floor(y));
+	}
 }
 
 function BresenhamLine() {
 	toOutput("Алгоритм Брезенхема:");
-	drawLine(startPoint, endPoint);
-}
-
-function drawLine(start, end) {
-	let x0 = start.x;
-	let y0 = start.y;
-	let x1 = end.x;
-	let y1 = end.y;
-
-	if (x0 > x1) [x0, x1] = [x1, x0];
-	if (y0 > y1) [y0, y1] = [y1, y0];
+	let x0 = startPoint.x;
+	let y0 = startPoint.y;
+	let x1 = endPoint.x;
+	let y1 = endPoint.y;
 
 	toOutput(`Отрезок от (${x0}, ${y0}) до (${x1}, ${y1})`);
-
 	const dx = Math.abs(x1 - x0);
 	const dy = Math.abs(y1 - y0);
 	const sx = x0 < x1 ? 1 : -1;
 	const sy = y0 < y1 ? 1 : -1;
 	let err = dx - dy;
 
+	toOutput(`Сдвиг по X: ${sx}`);
+	toOutput(`Сдвиг по Y: ${sy}`);
+
 	while (true) {
+		toOutput(`Рисуем точку (${x0}, ${y0})`);
 		paintPixel(x0, y0);
-		if (x0 === x1 && y0 === y1) break;
+		if (x0 === x1 && y0 === y1) {
+			addToOutput(`Алгоритм достиг конечной точки и завершает работу`);
+			break;
+		}
 		const e2 = err * 2;
 		if (e2 > -dy) {
 			err -= dy;
@@ -173,6 +236,7 @@ function drawLine(start, end) {
 			err += dx;
 			y0 += sy;
 		}
+		toOutput(`Новая ошибка err = ${err}`);
 	}
 }
 
